@@ -6,35 +6,57 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 
+async def write_instr(dut, addr, data):
+    """Task to write instruction into memory"""
+    dut.ui_in.value = (1 << 7) | (addr & 0xF)  # ui_in[7]=1 (WE), lower 4 bits = addr
+    dut.uio_in.value = data
+    await ClockCycles(dut.clk, 1)
+
+
 @cocotb.test()
 async def test_project(dut):
-    dut._log.info("Start")
+    dut._log.info("Start Cocotb Testbench")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
+    # Setup clock (10ns period = 100 MHz)
+    clock = Clock(dut.clk, 10, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
-    dut._log.info("Reset")
     dut.ena.value = 1
-    dut.ui_in.value = 0
+    dut.ui_in.value = (1<<7)
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 10)
 
-    dut._log.info("Test project behavior")
+    dut._log.info("Loading Program into Instruction Memory")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # --- Program load ---
+    program = [
+        (0, 0x01),  # opcode LOAD
+        (1, 0x05),  # operand 5
+        (2, 0x02),  # opcode ADD
+        (3, 0x03),  # operand 3
+        (4, 0x03),  # opcode SUB
+        (5, 0x02),  # operand 2
+        (6, 0x0A),  # opcode HALT
+        (7, 0x0A),  # opcode HALT (padding)
+    ]
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    for addr, data in program:
+        await write_instr(dut, addr, data)
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # Deassert write enable (ui_in[7] = 0)
+    dut.ui_in.value = 0
+    await ClockCycles(dut.clk, 2)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    dut._log.info("Running CPU")
+
+    # Run CPU for 50 cycles
+    await ClockCycles(dut.clk, 50)
+
+    # Example check: accumulator AC should be (5 + 3 - 2) = 6 at end
+    result = int(dut.AC.value)
+    dut._log.info(f"Final Accumulator = {result}")
+    assert result == 6, f"Expected AC=6, but got {result}"
