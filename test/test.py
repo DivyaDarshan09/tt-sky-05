@@ -57,6 +57,6 @@ async def test_project(dut):
     await ClockCycles(dut.clk, 50)
 
     # Example check: accumulator AC should be (5 + 3 - 2) = 6 at end
-    result = int(dut.AC.value)
+    result = int(dut.uo_out.value)
     dut._log.info(f"Final Accumulator = {result}")
     assert result == 6, f"Expected AC=6, but got {result}"
