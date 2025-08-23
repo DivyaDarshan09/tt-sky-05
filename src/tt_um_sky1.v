@@ -11,7 +11,7 @@ module tt_um_sky1(
     
 );
 //we , instr
-    wire [6:0] instr_addr = ui_in[6:0];    
+    wire [4:0] instr_addr = ui_in[4:0];    
     wire [7:0] instr_in = uio_in[7:0];        // Instruction input (8-bit opcode + 8-bit operand) in 2 PCs or 2 cycles like 8085
     reg [7:0] AC,DR;
     reg [31:0] PC;
@@ -19,7 +19,7 @@ module tt_um_sky1(
     assign uio_oe = 8'h00;
     assign uio_out = 8'h00;
     assign uo_out = AC;
-    reg [7:0] instruction_mem [0:127];
+    reg [7:0] instruction_mem [0:31];
     reg [1:0] state;
     reg [7:0] opcode;
     reg [7:0] operand;
@@ -76,5 +76,5 @@ module tt_um_sky1(
             end
         end
     end
-    wire _unused = &{ena};
+    wire _unused = &{ena,ui_in[6:5]};
 endmodule
