@@ -1,5 +1,5 @@
 `default_nettype none
-module ttsky1(
+module tt_um_sky1(
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
