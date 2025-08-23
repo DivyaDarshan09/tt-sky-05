@@ -26,8 +26,8 @@ module tt_um_sky1(
 
     parameter FETCH = 2'b00, DECODE = 2'b01, EXECUTE = 2'b10, HALT = 2'b11;
 
-    always @(posedge clk or posedge rst_n) begin
-        if (rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             PC <= 0;
             AC <= 0;
             DR <= 0;
