@@ -18,7 +18,8 @@ module tt_um_sky1(
     wire we = ui_in[7];
     assign uio_oe = 8'h00;
     assign uio_out = 8'h00;
-    reg [7:0] instruction_mem [0:31];
+    assign uo_out = 8'h00;
+    reg [7:0] instruction_mem [0:127];
     reg [1:0] state;
     reg [7:0] opcode;
     reg [7:0] operand;
@@ -75,4 +76,5 @@ module tt_um_sky1(
             end
         end
     end
+    wire _unused = &{ena};
 endmodule
