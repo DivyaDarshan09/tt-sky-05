@@ -13,7 +13,7 @@ module tt_um_sky1(
 //we , instr
     wire [4:0] instr_addr = ui_in[4:0];    
     wire [7:0] instr_in = uio_in[7:0];        // Instruction input (8-bit opcode + 8-bit operand) in 2 PCs or 2 cycles like 8085
-    reg [7:0] AC,DR;
+    reg [7:0] AC;
     reg [31:0] PC;
     wire we = ui_in[7];
     assign uio_oe = 8'h00;
