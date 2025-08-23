@@ -30,7 +30,6 @@ module tt_um_sky1(
         if (!rst_n) begin
             PC <= 0;
             AC <= 0;
-            DR <= 0;
             state <= FETCH;
             opcode <= 0;
             operand <= 0;
