@@ -52,7 +52,7 @@ module tt_um_sky1 (
                     DECODE: begin
                         if((opcode == 8'h07)||(opcode == 8'h08)||(opcode == 8'h09)||(opcode == 8'h0A)||(opcode == 8'h0E)
                         ||(opcode == 8'h0F)||(opcode == 8'h10)||(opcode == 8'h11)||(opcode == 8'h12)||(opcode == 8'h13)
-                        ||(opcode == 8'h16)||(opcode == 8'h17)||(opcode == 8'h18)||(opcode == 8'h19)) begin
+                           ||(opcode == 8'h16)||(opcode == 8'h17)||(opcode == 8'h18)||(opcode == 8'h19)||(opcode == 8'h20) )begin
                             state <= EXECUTE;
                         end
                         else begin  // Immediate
@@ -89,7 +89,10 @@ module tt_um_sky1 (
                             8'h16: if(AC == 8'h00) begin Zero <= 1; end else begin Zero <= 0; end   // AC Check 0
                             8'h17: AC <= AC + B; //ADD B
                             8'h18: AC <= AC + C; //ADD C
-                            8'h19: B <= B + C;  // BBC 
+                            8'h19: B <= B + C;  // BBC
+                            8'h20: AC <= AC -1:  // SUB C
+            
+                            
 
                             default: state <= HALT;
                         endcase
