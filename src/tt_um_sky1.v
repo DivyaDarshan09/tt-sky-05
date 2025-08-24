@@ -90,7 +90,7 @@ module tt_um_sky1 (
                             8'h17: AC <= AC + B; //ADD B
                             8'h18: AC <= AC + C; //ADD C
                             8'h19: B <= B + C;  // BBC
-                            8'h20: AC <= AC -1:  // SUB C
+                            8'h20: AC <= AC - C:  // SUB C
             
                             
 
