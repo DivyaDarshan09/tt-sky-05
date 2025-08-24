@@ -19,7 +19,7 @@ module tt_um_sky1 (
     assign uio_oe = 8'h00;
     assign uio_out = 8'h00;
     assign uo_out = AC;
-    reg [7:0] instruction_mem [0:20];
+    reg [7:0] instruction_mem [0:18];
     reg [7:0] B,C;
     reg [1:0] state;
     reg [7:0] opcode;
