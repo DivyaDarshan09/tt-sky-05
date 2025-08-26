@@ -10,6 +10,7 @@ module ALU (
 
     wire [7:0] B_in;
     wire Cin;
+    wire I_Carry;
 
     // If subtracting, invert B and set Cin=1
     assign B_in = sub ? ~B : B;
@@ -17,7 +18,7 @@ module ALU (
 
     // Perform addition
     assign {I_Carry, Sum} = A + B_in + Cin;
-    assign Cout = sub ? ~I_Carry : I_Carry;
+    assign Cout = sub ? ~(I_Carry) : (I_Carry);
 
     // Signed overflow detection
     assign Ovf = (A[7] == B_in[7]) && (Sum[7] != A[7]);
