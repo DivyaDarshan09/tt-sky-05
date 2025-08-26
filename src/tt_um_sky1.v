@@ -63,7 +63,7 @@ module tt_um_sky1 (
         JO = 8'h1E;   // Jump if Overflow==1
 
     // Wires for ADD, SUB, INR, DCR Based Op
-    wire is_add = (opcode == ADDI)  || (opcode == ADD_B) || (opcode == ADD_C) || (opcode == BBC);
+    //wire is_add = (opcode == ADDI)  || (opcode == ADD_B) || (opcode == ADD_C) || (opcode == BBC);
     wire is_sub = (opcode == SUBI)  || (opcode == SUB_B) || (opcode == SUB_C);
     wire is_inr = (opcode == INR_A) || (opcode == INR_B) || (opcode == INR_C);
     wire is_dcr = (opcode == DCR_A) || (opcode == DCR_B) || (opcode == DCR_C);
