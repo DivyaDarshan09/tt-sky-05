@@ -58,7 +58,9 @@ module tt_um_sky1 (
         ADD_C   = 8'h19,  // A = A + C
         BBC  = 8'h1A,  // B = B + C
         SUB_B   = 8'h1B,  // A = A - B
-        SUB_C   = 8'h1C;  // A = A - C  
+        SUB_C   = 8'h1C,  // A = A - C  
+        JNO = 8'h1D,  // Jump if Overflow==0
+        JO = 8'h1E;   // Jump if Overflow==1
 
     // Wires for ADD, SUB, INR, DCR Based Op
     wire is_add = (opcode == ADDI)  || (opcode == ADD_B) || (opcode == ADD_C) || (opcode == BBC);
@@ -168,6 +170,9 @@ module tt_um_sky1 (
                             BBC:    begin B  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
                             SUB_B:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
                             SUB_C:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            JNO: if(Overflow == 1'b0) begin PC <= PC + operand[4:0]; end // JNO addr
+                            JO: if(Overflow == 1'b1) begin PC <= PC + operand[4:0]; end // JO addr
+                            
 
                             
                             default: state <= HALT;
