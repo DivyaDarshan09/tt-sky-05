@@ -41,11 +41,11 @@ async def test_project(dut):
         (3, 0x05),  # 05
         (4, 0x0B),  # MVI B
         (5, 0x00),  # 00
-        (6, 0x19),  # BBC (B = B + C)
+        (6, 0x1A),  # BBC (B = B + C)
         (7, 0x0F),  # DCR A
         (8, 0x14),  # JNZ ADDR
         (9, 0x1C),  # PC = 10 - 4 = 6 (BBC) 
-        (10, 0x17),  # ADD B
+        (10, 0x18),  # ADD B
         (11, 0x0A),  # HALT
     ]
 
