@@ -17,7 +17,7 @@ module ALU (
     assign Cin  = sub ? 1'b1 : 1'b0;
 
     // Perform addition
-    assign {I_Carry, Sum} = A + B_in + Cin;
+    assign {I_Carry, Sum} = A + B_in + {7'b0000000,Cin};
     assign Cout = sub ? ~(I_Carry) : (I_Carry);
 
     // Signed overflow detection
