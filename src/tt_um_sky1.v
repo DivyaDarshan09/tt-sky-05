@@ -19,14 +19,87 @@ module tt_um_sky1 (
     assign uio_oe = 8'h00;
     assign uio_out = 8'h00;
     assign uo_out = AC;
-    reg [7:0] instruction_mem [0:18];
+    reg [7:0] instruction_mem [0:24];
     reg [7:0] B,C;
     reg [1:0] state;
     reg [7:0] opcode;
     reg [7:0] operand;
-    reg Zero;
+    reg Zero,Carry,Overflow;
 
     parameter FETCH = 2'b00, DECODE = 2'b01, EXECUTE = 2'b10, HALT = 2'b11;
+    // Instruction Opcodes
+    localparam 
+        MVI_A   = 8'h01,  // Move Immediate to A
+        ADDI    = 8'h02,  // Add Immediate
+        SUBI    = 8'h03,  // Sub Immediate
+        ANDI    = 8'h04,  // AND Immediate
+        ORI     = 8'h05,  // OR Immediate
+        XORI    = 8'h06,  // XOR Immediate
+        NOTA    = 8'h07,  // NOT A
+        SHL     = 8'h08,  // Shift Left A
+        SHR     = 8'h09,  // Shift Right A
+        HLT    = 8'h0A,  // HALT
+
+        MVI_B   = 8'h0B,  // Move Immediate to B
+        MVI_C   = 8'h0C,  // Move Immediate to C
+        JMP     = 8'h0D,  // Jump by offset
+        INR_A   = 8'h0E,  // Increment A
+        DCR_A   = 8'h0F,  // Decrement A
+        INR_B   = 8'h10,  // Increment B
+        DCR_B   = 8'h11,  // Decrement B
+        INR_C   = 8'h12,  // Increment C
+        DCR_C   = 8'h13,  // Decrement C
+
+        JNZ     = 8'h14,  // Jump if Zero==0
+        JZ      = 8'h15,  // Jump if Zero==1
+        JNC     = 8'h16,  // Jump if Carry==0
+        JC      = 8'h17,  // Jump if Carry==1
+        ADD_B   = 8'h18,  // A = A + B
+        ADD_C   = 8'h19,  // A = A + C
+        BBC  = 8'h1A,  // B = B + C
+        SUB_B   = 8'h1B,  // A = A - B
+        SUB_C   = 8'h1C;  // A = A - C  
+
+    // Wires for ADD, SUB, INR, DCR Based Op
+    wire is_add = (opcode == ADDI)  || (opcode == ADD_B) || (opcode == ADD_C) || (opcode == BBC);
+    wire is_sub = (opcode == SUBI)  || (opcode == SUB_B) || (opcode == SUB_C);
+    wire is_inr = (opcode == INR_A) || (opcode == INR_B) || (opcode == INR_C);
+    wire is_dcr = (opcode == DCR_A) || (opcode == DCR_B) || (opcode == DCR_C);
+
+    // ---------------- ALU input selection ----------------
+    wire [7:0] ALU_A =
+        (opcode == ADDI || opcode == SUBI) ? AC :
+        (opcode == ADD_B || opcode == ADD_C || opcode == SUB_B || opcode == SUB_C) ? AC :
+        (opcode == BBC) ? B :
+        (opcode == INR_A || opcode == DCR_A) ? AC :
+        (opcode == INR_B || opcode == DCR_B) ? B  :
+        (opcode == INR_C || opcode == DCR_C) ? C  :
+        8'h00;
+
+    wire [7:0] ALU_B =
+        (opcode == ADDI || opcode == SUBI) ? operand :
+        (opcode == ADD_B || opcode == SUB_B)  ? B :
+        (opcode == ADD_C || opcode == SUB_C) ? C :
+        (opcode == BBC) ? C :
+        (is_inr || is_dcr) ? 8'h01 :     // +1 for INR, -1 via alu_sub for DCR
+        8'h00;
+
+    // SUB and DCR enable
+    wire ALU_sub = is_sub || is_dcr;
+
+    // ALU Sum Output
+    wire [7:0] ALU_sum;
+    wire CY,Z,OVF;
+    ALU ALU1(
+        .A   (ALU_A),
+        .B   (ALU_B),
+        .sub (ALU_sub),
+        .Sum (ALU_sum),
+        .Cout(CY),
+        .Ovf (OVF),
+        .ZERO(Z)
+    );
+
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -37,7 +110,9 @@ module tt_um_sky1 (
             operand <= 0;
             B <= 0;
             C <= 0; 
-            Zero <= 0;
+            Carry    <= 0;
+            Overflow <= 0;
+            Zero     <= 0;
         end else begin
             if (we) begin
                 instruction_mem[instr_addr] <= instr_in;
@@ -52,7 +127,7 @@ module tt_um_sky1 (
                     DECODE: begin
                         if((opcode == 8'h07)||(opcode == 8'h08)||(opcode == 8'h09)||(opcode == 8'h0A)||(opcode == 8'h0E)
                         ||(opcode == 8'h0F)||(opcode == 8'h10)||(opcode == 8'h11)||(opcode == 8'h12)||(opcode == 8'h13)
-                           ||(opcode == 8'h16)||(opcode == 8'h17)||(opcode == 8'h18)||(opcode == 8'h19)||(opcode == 8'h20) )begin
+                        ||(opcode == 8'h17)||(opcode == 8'h18)||(opcode == 8'h19)||(opcode == 8'h20)) begin
                             state <= EXECUTE;
                         end
                         else begin  // Immediate
@@ -64,36 +139,37 @@ module tt_um_sky1 (
 
                     EXECUTE: begin
                         case (opcode)
-                            8'h01: AC <= operand;         // MVI A
-                            8'h02: AC <= AC + operand;    // ADDI
-                            8'h03: AC <= AC - operand;    // SUBI
-                            8'h04: AC <= AC & operand;    // ANDI
-                            8'h05: AC <= AC | operand;    // ORI
-                            8'h06: AC <= AC ^ operand;    // XORI
-                            8'h07: AC <= ~AC;             // NOT
-                            8'h08: AC <= AC << 1;         // SHL
-                            8'h09: AC <= AC >> 1;         // SHR
-                            8'h0A: state <= HALT;         // HALT
-                            
-                            8'h0B: B <= operand;         // MVI B
-                            8'h0C: C <= operand;         // MVI C 
-                            8'h0D: PC <= PC + operand[4:0];    //JMP addr
-                            8'h0E: AC <= AC + 1;  // INR A
-                            8'h0F: AC <= AC - 1;  // DCR A
-                            8'h10: B <= B + 1;   // INR  B
-                            8'h11: B <= B - 1;   // DCR B
-                            8'h12: C <= C + 1;   // INR C
-                            8'h13: C <= C - 1;   // DCR C
-                            8'h14: if(Zero == 1'b0) begin PC <= PC + operand[4:0]; end // JNZ addr
-                            8'h15: if(Zero == 1'b1) begin PC <= PC + operand[4:0]; end // JZ addr
-                            8'h16: if(AC == 8'h00) begin Zero <= 1; end else begin Zero <= 0; end   // AC Check 0
-                            8'h17: AC <= AC + B; //ADD B
-                            8'h18: AC <= AC + C; //ADD C
-                            8'h19: B <= B + C;  // BBC
-                            8'h20: AC <= AC - C;  // SUB C
-            
-                            
+                            MVI_A:  AC <= operand;
+                            ADDI:   begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            SUBI:   begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            ANDI:   AC <= AC & operand;
+                            ORI:    AC <= AC | operand;
+                            XORI:   AC <= AC ^ operand;
+                            NOTA:   AC <= ~AC;
+                            SHL:    AC <= AC << 1;
+                            SHR:    AC <= AC >> 1;
+                            HLT:   state <= HALT;
 
+                            MVI_B:  B <= operand;
+                            MVI_C:  C <= operand;
+                            JMP:    PC <= PC + operand[4:0];
+                            INR_A:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            DCR_A:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            INR_B:  begin B  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            DCR_B:  begin B  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            INR_C:  begin C  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            DCR_C:  begin C  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            JNZ: if(Zero == 1'b0) begin PC <= PC + operand[4:0]; end // JNZ addr
+                            JZ: if(Zero == 1'b1) begin PC <= PC + operand[4:0]; end // JZ addr
+                            JNC: if(Carry == 1'b0) begin PC <= PC + operand[4:0]; end // JNC addr
+                            JC: if(Carry == 1'b1) begin PC <= PC + operand[4:0]; end // JC addr
+                            ADD_B:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            ADD_C:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            BBC:    begin B  <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            SUB_B:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+                            SUB_C:  begin AC <= ALU_sum; Carry <= CY ; Zero <= Z; Overflow <= OVF; end
+
+                            
                             default: state <= HALT;
                         endcase
                         if (opcode != 8'h0A)
