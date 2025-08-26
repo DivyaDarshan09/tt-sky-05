@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:
-  title:        "8-Bit CPU"      # Project title
+  title:        "GD Sky Processor"      # Project title
   author:       "Goutham"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "8-bit basic ALU unit with 8-bit instructions"      # One line description of what your project does
