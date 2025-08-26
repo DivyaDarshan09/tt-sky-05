@@ -125,9 +125,9 @@ module tt_um_sky1 (
                     end
 
                     DECODE: begin
-                        if((opcode == 8'h07)||(opcode == 8'h08)||(opcode == 8'h09)||(opcode == 8'h0A)||(opcode == 8'h0E)
-                        ||(opcode == 8'h0F)||(opcode == 8'h10)||(opcode == 8'h11)||(opcode == 8'h12)||(opcode == 8'h13)
-                        ||(opcode == 8'h17)||(opcode == 8'h18)||(opcode == 8'h19)||(opcode == 8'h20)) begin
+                        if((opcode == NOTA)||(opcode == SHL)||(opcode == SHR)||(opcode == HLT)||(opcode == INR_A)
+                        ||(opcode == DCR_A)||(opcode == INR_B)||(opcode == DCR_B)||(opcode == INR_C)||(opcode == DCR_C)
+                        ||(opcode == ADD_B)||(opcode == ADD_C)||(opcode == BBC)||(opcode == SUB_B)||(opcode == SUB_C)) begin
                             state <= EXECUTE;
                         end
                         else begin  // Immediate
